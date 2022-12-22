@@ -1,9 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="jp" dir="ltr">
+
+  <head>
+    <meta charset="utf-8">
+    <style>
+      .edit-area {
+          border: #000 1px solid;
+          border-collapse:collapse;
+          resize: none;
+          margin: 0;
+          padding: 0;
+          width: 400px;
+          height: 100px;
+      }
+    </style>
+  </head>
   <body>
     <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
     <div id="player"></div>
-
+    <div>
+      <button id="preious_btn">Preious</button>
+      <button id="play_btn">Play</button>
+      <button id="next_btn">Next</button>
+    </div>
+    <div>
+      <span id="showing_subtitle">字幕顯示區</span>
+    </div>
+    <div>
+      <textarea id="edit_area" class="edit-area" placeholder="字幕調整區"></textarea>
+    </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
       integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
       crossorigin="anonymous"></script>
@@ -19,13 +44,15 @@
       // 3. This function creates an <iframe> (and YouTube player)
       //    after the API code downloads.
       var player;
+      var subtitleObject = {};
       function onYouTubeIframeAPIReady() {
         player = new YT.Player('player', {
           height: '390',
           width: '640',
           videoId: 'm5vJTOF4PnE',
           playerVars: {
-            'playsinline': 1
+            'playsinline': 1,
+            'controls': 0
           },
           events: {
             'onReady': onPlayerReady,
@@ -37,74 +64,137 @@
       // 4. The API will call this function when the video player is ready.
       function onPlayerReady(event) {
         event.target.playVideo();
+
       }
 
       // 5. The API calls this function when the player's state changes.
       //    The function indicates that when playing a video (state=1),
       //    the player should play for six seconds and then stop.
       var done = false;
+      //var playing = false;
+      var intervalID;
+      var showingSubtitle;
+      var currentIndex = 0;
+      var maxIndex = 0;
       function onPlayerStateChange(event) {
-        if (event.data == YT.PlayerState.PLAYING && !done) {
-          setTimeout(stopVideo, 6000);
-          done = true;
+        /*
+        console.log(event.data);
+        if (event.data == YT.PlayerState.PAUSED) {
+          playing = false;
+        }
+        */
+        if (event.data == YT.PlayerState.PLAYING) {
+          //playing = true;
+          var subtitleObject = getSubtitle(currentIndex);
+          var start = subtitleObject['start'];
+          var end = subtitleObject['end'];
+          //console.log("start at:", start);
+          //console.log("end at:", end);
+          var duration = ((end - start) * 1000) - 400;
+          if(duration <= 0) {
+            duration = 50;
+          }
+
+          showSubtitle(subtitleObject['jp']);
+          //console.log("duration:", duration);
+          //console.log(subtitleObject['jp']);
+          setTimeout(pauseVideo, duration);
+
+          if(!done) {
+            setTimeout(stopVideo, 6000);
+            done = true;
+          }
         }
       }
       function stopVideo() {
         player.stopVideo();
       }
 
+      function playVideo() {
+        var subtitleObject = getSubtitle(currentIndex);
+        var start = subtitleObject['start'];
+        if(start !== 0){
+          start = start - 0.06;
+        }
+        
+        player.seekTo(start,true);
+        player.playVideo();
+      }
+
+      function pauseVideo() {
+        player.pauseVideo();
+      }
+
+      function showSubtitle(txt) {
+        $( "#showing_subtitle" ).text(txt);
+        $( "#edit_area" ).val(txt);
+      }
+
       window.onload = function(e){
-          parseCsv();
-          var intervalID = setInterval(getCurrentVideoTime, 1000);
+          loadJson();
+          //intervalID = setInterval(getCurrentVideoTime, 100);
       }
 
       // 抓取YT影片播放時間
+      /*
       function getCurrentVideoTime()
       {
         var currentTime = player.playerInfo.currentTime;
-        console.log(currentTime);
+        //getSubtitle(currentTime);
       }
-
-      function parseCsv(csvFile)
+      */
+      function loadJson(csvFile)
       {
-        /*
-        $.ajax({
-          type: "GET",
-          url: "demo.json",
-          crossDomain: true,
-          dataType: 'jsonp',
-          success: function(data) {
-            console.log(data);
-          },
-          error: function (err) {
-            console.log(err);
-          },
-
-        });
-        */
         $.ajax({
           type : 'GET',
           dataType : 'json',
           async: false,
           url: 'demo.json',
-          success : function(data) {
-              console.log(data); 
-          } 
+          success : function(jsonObjects) {
+              subtitleObject = jsonObjects;
+              maxIndex = Object.keys(subtitleObject).length;
+              console.log("JSON load success");
+              console.log("maxIndex:", maxIndex);
+            } 
+        });
+      }
+
+      function getSubtitle(index) {
+        return subtitleObject[index];
+      }
+      /*
+      function getSubtitle(time) {
+        if(playing) {
+          $.each(subtitleObject, function(index, data){
+            if(time >= data['start'] && time <= data['end']) {
+              if(data['jp'] != showingSubtitle) {
+                showingSubtitle = data['jp'];
+                console.log(showingSubtitle);
+              }
+            }
+          })
+        }
+      }
+      */
+      $( "#play_btn" ).click(function() {
+        playVideo();
       });
-        /*
-        var csvFile = "https://drive.google.com/file/d/1GvfASm7k2y56eyQrsz9r943Aq0N7GJbR/view?usp=share_link";
-        $.get(csvFile, readCsv, 'text');
-        //var csvObjects = $.csv.toObjects(csvFile);
-        //console.log(csvObjects);
-        */
-      }
-
-      function readCsv(data) {
-        var csvObjects = $.csv.toObjects(data);
-        console.log(csvObjects);
-
-      }
-
+      $( "#preious_btn" ).click(function() {
+        if(currentIndex <= 0) {
+          currentIndex = 0;
+        } else {
+          currentIndex = currentIndex - 1;
+        }
+        playVideo();
+      });
+      $( "#next_btn" ).click(function() {
+        if(currentIndex >= maxIndex) {
+          currentIndex = maxIndex;
+        } else {
+          currentIndex = currentIndex + 1;
+        }
+        playVideo();
+      });
     </script>
   </body>
 </html>
