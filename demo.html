@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
+    <div id="player"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.21/jquery.csv.min.js"></script>
+    <script>
+      // 2. This code loads the IFrame Player API code asynchronously.
+      var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      // 3. This function creates an <iframe> (and YouTube player)
+      //    after the API code downloads.
+      var player;
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          height: '390',
+          width: '640',
+          videoId: 'm5vJTOF4PnE',
+          playerVars: {
+            'playsinline': 1
+          },
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange
+          }
+        });
+      }
+
+      // 4. The API will call this function when the video player is ready.
+      function onPlayerReady(event) {
+        event.target.playVideo();
+      }
+
+      // 5. The API calls this function when the player's state changes.
+      //    The function indicates that when playing a video (state=1),
+      //    the player should play for six seconds and then stop.
+      var done = false;
+      function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PLAYING && !done) {
+          setTimeout(stopVideo, 6000);
+          done = true;
+        }
+      }
+      function stopVideo() {
+        player.stopVideo();
+      }
+
+      window.onload = function(e){
+          parseCsv();
+          var intervalID = setInterval(getCurrentVideoTime, 1000);
+      }
+
+      // 抓取YT影片播放時間
+      function getCurrentVideoTime()
+      {
+        var currentTime = player.playerInfo.currentTime;
+        console.log(currentTime);
+      }
+
+      function parseCsv(csvFile)
+      {
+        var csvFile = "https://drive.google.com/file/d/1GvfASm7k2y56eyQrsz9r943Aq0N7GJbR/view?usp=share_link";
+        $.get(csvFile, readCsv, 'text');
+        //var csvObjects = $.csv.toObjects(csvFile);
+        //console.log(csvObjects);
+      }
+
+      function readCsv(data) {
+        var csvObjects = $.csv.toObjects(data);
+        console.log(csvObjects);
+
+      }
+
+    </script>
+  </body>
+</html>
