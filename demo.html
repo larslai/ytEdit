@@ -89,16 +89,6 @@
           url: 'demo.json',
           success : function(data) {
               console.log(data); 
-              var topics = [];
-              $.each(data.results, function(index, obj){
-                  topics.push({
-                      username: obj.TopicName,
-                      mentions: obj.LastHourCount,
-                      totalcount: obj.TotalCount,
-                      daycount: obj.Last24HoursCount
-                  }); 
-              });
-              $('#leader').tmpl(topics).appendTo('#top3');
           } 
       });
         /*
