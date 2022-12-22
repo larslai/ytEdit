@@ -67,10 +67,46 @@
 
       function parseCsv(csvFile)
       {
+        /*
+        $.ajax({
+          type: "GET",
+          url: "demo.json",
+          crossDomain: true,
+          dataType: 'jsonp',
+          success: function(data) {
+            console.log(data);
+          },
+          error: function (err) {
+            console.log(err);
+          },
+
+        });
+        */
+        $.ajax({
+          type : 'GET',
+          dataType : 'json',
+          async: false,
+          url: '/demo.json',
+          success : function(data) {
+              console.log(data); 
+              var topics = [];
+              $.each(data.results, function(index, obj){
+                  topics.push({
+                      username: obj.TopicName,
+                      mentions: obj.LastHourCount,
+                      totalcount: obj.TotalCount,
+                      daycount: obj.Last24HoursCount
+                  }); 
+              });
+              $('#leader').tmpl(topics).appendTo('#top3');
+          } 
+      });
+        /*
         var csvFile = "https://drive.google.com/file/d/1GvfASm7k2y56eyQrsz9r943Aq0N7GJbR/view?usp=share_link";
         $.get(csvFile, readCsv, 'text');
         //var csvObjects = $.csv.toObjects(csvFile);
         //console.log(csvObjects);
+        */
       }
 
       function readCsv(data) {
