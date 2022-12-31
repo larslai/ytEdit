@@ -13,6 +13,12 @@
           width: 400px;
           height: 100px;
       }
+      .flex-container {
+        display: flex;
+      }
+      .edit-container {
+        padding: 10px;
+      }
     </style>
   </head>
   <body>
@@ -23,17 +29,39 @@
       <button id="play_btn">Play</button>
       <button id="next_btn">Next</button>
     </div>
-    <div>
-      <span id="showing_subtitle">字幕顯示區</span>
+    <div class="flex-container">
+      <div class="edit-container">
+        <div>
+          <span>日文</span>
+        </div>
+        <div>
+          <span id="showing_jp_subtitle">字幕顯示區</span>
+        </div>
+        <div>
+          <textarea id="edit_jp_area" class="edit-area" placeholder="字幕調整區"></textarea>
+        </div>
+      </div>
+      <div class="edit-container">
+        <div>
+          <span>中文</span>
+        </div>
+        <div>
+          <span id="showing_tw_subtitle">字幕顯示區</span>
+        </div>
+        <div>
+          <textarea id="edit_tw_area" class="edit-area" placeholder="字幕調整區"></textarea>
+        </div>
+      </div>
     </div>
     <div>
-      <textarea id="edit_area" class="edit-area" placeholder="字幕調整區"></textarea>
+      <button id="update_btn">字幕更新儲存</button>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
       integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
       crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.21/jquery.csv.min.js"></script>
     <script>
+      var videoId = null;
       // 2. This code loads the IFrame Player API code asynchronously.
       var tag = document.createElement('script');
 
@@ -46,10 +74,15 @@
       var player;
       var subtitleObject = {};
       function onYouTubeIframeAPIReady() {
+        let searchParams = new URLSearchParams(window.location.search)
+        if(searchParams.has('id')) {
+          videoId = searchParams.get('id')
+        }
+
         player = new YT.Player('player', {
           height: '390',
           width: '640',
-          videoId: 'm5vJTOF4PnE',
+          videoId: videoId,
           playerVars: {
             'playsinline': 1,
             'controls': 0
@@ -63,8 +96,7 @@
 
       // 4. The API will call this function when the video player is ready.
       function onPlayerReady(event) {
-        event.target.playVideo();
-
+        //event.target.playVideo();
       }
 
       // 5. The API calls this function when the player's state changes.
@@ -90,12 +122,13 @@
           var end = subtitleObject['end'];
           //console.log("start at:", start);
           //console.log("end at:", end);
-          var duration = ((end - start) * 1000) - 400;
+          //var duration = ((end - start) * 1000) - 400;
+          var duration = ((end - start) * 1000);
           if(duration <= 0) {
             duration = 50;
           }
 
-          showSubtitle(subtitleObject['jp']);
+          showSubtitle(subtitleObject['jp'], subtitleObject['tw']);
           //console.log("duration:", duration);
           //console.log(subtitleObject['jp']);
           setTimeout(pauseVideo, duration);
@@ -114,7 +147,7 @@
         var subtitleObject = getSubtitle(currentIndex);
         var start = subtitleObject['start'];
         if(start !== 0){
-          start = start - 0.06;
+          //start = start - 0.06;
         }
         
         player.seekTo(start,true);
@@ -125,9 +158,11 @@
         player.pauseVideo();
       }
 
-      function showSubtitle(txt) {
-        $( "#showing_subtitle" ).text(txt);
-        $( "#edit_area" ).val(txt);
+      function showSubtitle(jp_txt, tw_txt) {
+        $( "#showing_jp_subtitle" ).text(jp_txt);
+        $( "#edit_jp_area" ).val(jp_txt);
+        $( "#showing_tw_subtitle" ).text(tw_txt);
+        $( "#edit_tw_area" ).val(tw_txt);
       }
 
       window.onload = function(e){
@@ -149,7 +184,7 @@
           type : 'GET',
           dataType : 'json',
           async: false,
-          url: 'demo.json',
+          url: 'files/'+videoId+'.json',
           success : function(jsonObjects) {
               subtitleObject = jsonObjects;
               maxIndex = Object.keys(subtitleObject).length;

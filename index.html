@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="jp" dir="ltr">
+
+  <head>
+    <meta charset="utf-8">
+    <style>
+      table, th, td {
+        border: 1px solid black;
+        border-collapse: collapse;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div id="video_table"></div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.21/jquery.csv.min.js"></script>
+    <script>
+      var fileInfos = null;
+
+      window.onload = function(e){
+          loadIndexJson();
+          generateList();
+      }
+
+      function loadIndexJson(){
+        $.ajax({
+          type : 'GET',
+          dataType : 'json',
+          async: false,
+          url: 'index.json',
+          success : function(fileObjects) {
+              fileInfos = fileObjects;
+              maxIndex = Object.keys(fileInfos).length;
+              console.log("JSON load success");
+              console.log("maxIndex:", maxIndex);
+            } 
+        });
+      }
+
+      function generateList(){
+        var linkBase = "http://127.0.0.1:8080/demo.html?id=";
+        var content = "<table>"
+        content += "<tr><th>Video ID</th><th>Video Link</th></tr>";
+        
+        fileInfos.forEach(function(info){
+          if(!info.fixed) {
+            content += '<tr>';
+            content += ' <td>' + info.id + '</td>';
+            content += ' <td><a href="'+ linkBase +  info.id +'">' + "Edit" + '</a></td>';
+            content += '</tr>';
+          }
+        });
+
+        content += "</table>";
+        $('#video_table').append(content);
+      }
+    </script>
+  </body>
+</html>
