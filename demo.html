@@ -211,6 +211,18 @@
         }
       }
       */
+      function lockMode(type) {
+        if(type) {
+          $('textarea[id="edit_tw_area"]').prop('disabled', true);
+          $('textarea[id="edit_jp_area"]').prop('disabled', true);
+          $("#update_btn").attr('disabled', true);
+        } else {
+          $('textarea[id="edit_tw_area"]').prop('disabled', false);
+          $('textarea[id="edit_jp_area"]').prop('disabled', false);
+          $("#update_btn").attr('disabled', false);
+        }
+      }
+
       $( "#play_btn" ).click(function() {
         playVideo();
       });
@@ -230,6 +242,35 @@
         }
         playVideo();
       });
+      $( "#update_btn" ).click(function() {
+        lockMode(true);
+        var twTxt =  $( "#edit_tw_area" ).val();
+        var jpTxt =  $( "#edit_jp_area" ).val();
+        console.log(videoId);
+        console.log(currentIndex);
+        console.log(jpTxt);
+        console.log(twTxt);
+        $.ajax({
+          type : 'POST',
+          url: 'https://1oltxev2o5.execute-api.ap-northeast-1.amazonaws.com/subtitle_modify',
+          data: {
+            "vid": videoId,
+            "index": currentIndex,
+            "jp": jpTxt,
+            "tw": twTxt
+          },
+          dataType: "json",
+          success : function(jsonObjects) {
+            alert("Update success.");
+            lockMode(false);
+          },
+          error: function(XMLHttpRequest, textStatus, errorThrown) {
+            alert("Update Fail");
+            console.log(errorThrown);
+          }
+        });
+      });
+
     </script>
   </body>
 </html>
